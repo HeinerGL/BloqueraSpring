@@ -1,9 +1,13 @@
 package com.project.bloquera.services;
 
 import com.project.bloquera.dtos.producto.ProductoCreateRequest;
-import com.project.bloquera.exceptions.ResourceNotFoundException;
+import com.project.bloquera.exceptions.notfound.MateriaPrimaNotFoundException;
+import com.project.bloquera.exceptions.notfound.ProductoNotFoundException;
 import com.project.bloquera.mappers.ProductoMapper;
+import com.project.bloquera.models.DetalleMateriaProducto;
+import com.project.bloquera.models.MateriaPrima;
 import com.project.bloquera.models.Producto;
+import com.project.bloquera.repositories.MateriaPrimaRepository;
 import com.project.bloquera.repositories.ProductoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,13 +16,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductoService {
     private final ProductoRepository productoRepository;
+    private final MateriaPrimaRepository materiaPrimaRepository;
 
     private final ProductoMapper productoMapper;
 
-    public static final String PRODUCTO_NOT_FOUND = "Producto #%d no encontrado";
-
-    public ProductoService(ProductoRepository productoRepository, ProductoMapper productoMapper) {
+    public ProductoService(ProductoRepository productoRepository,
+        MateriaPrimaRepository materiaPrimaRepository,
+        ProductoMapper productoMapper) {
         this.productoRepository = productoRepository;
+        this.materiaPrimaRepository = materiaPrimaRepository;
 
         this.productoMapper = productoMapper;
     }
@@ -27,14 +33,29 @@ public class ProductoService {
         return productoRepository.findAll(pageable);
     }
 
+    public Iterable<Producto> getListProductos() {
+        return productoRepository.findAll();
+    }
+
     public Producto getProductoById(Long id) {
         return productoRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                PRODUCTO_NOT_FOUND.formatted(id)));
+            .orElseThrow(() -> new ProductoNotFoundException(id));
     }
 
     public Producto createProducto(ProductoCreateRequest productoRequest) {
-        Producto producto = productoMapper.CreateRequestToModel(productoRequest);
+        Producto producto = productoMapper.createRequestToModel(productoRequest);
+
+        productoRequest.detalleMateriaPrima().forEach(detalleMateriaPrima -> {
+            MateriaPrima materiaPrima = materiaPrimaRepository.findById(detalleMateriaPrima.materiaPrimaId())
+                .orElseThrow(() -> new MateriaPrimaNotFoundException(detalleMateriaPrima.materiaPrimaId()));
+
+            DetalleMateriaProducto detalleMateriaProducto = new DetalleMateriaProducto();
+            detalleMateriaProducto.setCantidad(detalleMateriaPrima.cantidad());
+            detalleMateriaProducto.setMateriaPrima(materiaPrima);
+
+            producto.addDetalleMateriaProducto(detalleMateriaProducto);
+        });
+
         return productoRepository.save(producto);
     }
 
@@ -42,7 +63,7 @@ public class ProductoService {
         boolean productoExists = productoRepository.existsById(id);
 
         if (!productoExists) {
-            throw new ResourceNotFoundException(PRODUCTO_NOT_FOUND.formatted(id));
+            throw new ProductoNotFoundException(id);
         }
 
         producto.setId(id);
@@ -52,8 +73,7 @@ public class ProductoService {
 
     public void deleteProducto(Long id) {
         Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        PRODUCTO_NOT_FOUND.formatted(id)));
+                .orElseThrow(() -> new ProductoNotFoundException(id));
 
         productoRepository.delete(producto);
     }

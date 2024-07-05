@@ -8,7 +8,7 @@ import com.project.bloquera.models.Cliente;
 @Component
 public class ClienteMapper {
     
-    public Cliente CreateRequestToModel(ClienteCreateRequest createRequest) {
+    public Cliente createRequestToModel(ClienteCreateRequest createRequest) {
         Cliente cliente = new Cliente();
         cliente.setNombres(createRequest.nombres());
         cliente.setApellidos(createRequest.apellidos());

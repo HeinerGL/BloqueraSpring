@@ -8,7 +8,7 @@ import com.project.bloquera.models.MateriaPrima;
 @Component
 public class MateriaPrimaMapper {
 
-    public MateriaPrima CreateRequestToModel(MateriaPrimaCreateRequest createRequest) {
+    public MateriaPrima createRequestToModel(MateriaPrimaCreateRequest createRequest) {
         MateriaPrima materiaPrima = new MateriaPrima();
         materiaPrima.setDescripcion(createRequest.descripcion());
         materiaPrima.setPrecio(createRequest.precio());

@@ -4,15 +4,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.project.bloquera.exceptions.ResourceNotFoundException;
+import com.project.bloquera.exceptions.notfound.ArticuloNotFoundException;
 import com.project.bloquera.models.Articulo;
 import com.project.bloquera.repositories.ArticuloRepository;
 
 @Service
 public class ArticuloService {
     private final ArticuloRepository articuloRepository;
-
-    public static final String ARTICULO_NOT_FOUND = "Articulo #%d no encontrado";
 
     public ArticuloService(ArticuloRepository articuloRepository) {
         this.articuloRepository = articuloRepository;
@@ -24,7 +22,6 @@ public class ArticuloService {
 
     public Articulo getArticuloById(Long id) {
         return articuloRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ARTICULO_NOT_FOUND.formatted(id)));
+            .orElseThrow(() -> new ArticuloNotFoundException(id));
     }
 }

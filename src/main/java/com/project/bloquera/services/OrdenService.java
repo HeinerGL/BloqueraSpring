@@ -2,16 +2,19 @@ package com.project.bloquera.services;
 
 import com.project.bloquera.dtos.orden.OrdenCreateRequest;
 import com.project.bloquera.dtos.orden.OrdenResponse;
-import com.project.bloquera.exceptions.ResourceNotFoundException;
+import com.project.bloquera.exceptions.notfound.ArticuloNotFoundException;
+import com.project.bloquera.exceptions.notfound.ClienteNotFoundException;
+import com.project.bloquera.exceptions.notfound.OrdenNotFoundException;
 import com.project.bloquera.mappers.OrdenMapper;
 import com.project.bloquera.models.Articulo;
 import com.project.bloquera.models.Cliente;
+import com.project.bloquera.models.EstadoOrden;
 import com.project.bloquera.models.Orden;
 import com.project.bloquera.repositories.ArticuloRepository;
 import com.project.bloquera.repositories.ClienteRepository;
+import com.project.bloquera.repositories.EstadoOrdenRepository;
 import com.project.bloquera.repositories.OrdenRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -20,56 +23,57 @@ public class OrdenService {
     private final OrdenRepository ordenRepository;
     private final ClienteRepository clienteRepository;
     private final ArticuloRepository articuloRepository;
+    private final EstadoOrdenRepository estadoOrdenRepository;
 
     private final OrdenMapper ordenMapper;
-
-    public static final String ORDEN_NOT_FOUND = "Orden #%d no encontrada";
 
     public OrdenService(OrdenRepository ordenRepository,
         ClienteRepository clienteRepository,
         ArticuloRepository articuloRepository,
+        EstadoOrdenRepository estadoOrdenRepository,
         OrdenMapper ordenMapper) {
         this.ordenRepository = ordenRepository;
         this.clienteRepository = clienteRepository;
         this.articuloRepository = articuloRepository;
+        this.estadoOrdenRepository = estadoOrdenRepository;
 
         this.ordenMapper = ordenMapper;
     }
 
-    public Page<OrdenResponse> getAllOrdenes() {
-        Pageable pageable = PageRequest.of(0, 3);
-        return ordenRepository.findAll(pageable)
+    public Page<OrdenResponse> getAllOrdenes(Pageable page) {
+        return ordenRepository.findAll(page)
             .map(ordenMapper::modelToResponse);
     }
 
     public OrdenResponse getOrdenById(Long id) {
         return ordenRepository.findById(id)
             .map(ordenMapper::modelToResponse)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                ORDEN_NOT_FOUND.formatted(id)));
+            .orElseThrow(() -> new OrdenNotFoundException(id));
     }
 
-    public OrdenResponse createOrden(OrdenCreateRequest orden) {
+    public OrdenResponse createOrden(OrdenCreateRequest orden, String username) {
         Orden newOrden = new Orden();
 
         Cliente cliente = clienteRepository.findById(orden.clienteId())
-            .orElseThrow();
+            .orElseThrow(() -> new ClienteNotFoundException(orden.clienteId()));
         newOrden.setCliente(cliente);
 
         orden.detalle().forEach(detalle -> {
             Articulo articulo = articuloRepository.findById(detalle.articuloId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    ProductoService.PRODUCTO_NOT_FOUND.formatted(detalle.articuloId())));
+                .orElseThrow(() -> new ArticuloNotFoundException(detalle.articuloId()));
 
             if (articulo.getStock() >= detalle.cantidad()) {
-                Double newStock = articulo.getStock() - detalle.cantidad();
-                articulo.setStock(newStock);
-
                 newOrden.addArticulo(detalle.cantidad(), articulo);
-                articuloRepository.save(articulo);
             }
             // si no lanzar excepcion de producto sin stock
         });
+
+        // asignar estado pendiente a la factura
+        EstadoOrden estadoOrden = estadoOrdenRepository.findById(2L)
+            .orElseThrow();
+
+        newOrden.setEstadoOrden(estadoOrden);
+        newOrden.setUsername(username);
 
         return ordenMapper.modelToResponse(ordenRepository.save(newOrden));
     }
@@ -88,9 +92,14 @@ public class OrdenService {
 
     public void deleteOrden(Long id) {
         Orden orden = ordenRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    ORDEN_NOT_FOUND.formatted(id)));
+            .orElseThrow(() -> new OrdenNotFoundException(id));
 
-        ordenRepository.delete(orden);
+        EstadoOrden estadoOrden = estadoOrdenRepository.findById(1L)
+            .orElseThrow();
+
+        if (orden.getEstadoOrden().getId() == 2L) {
+            orden.setEstadoOrden(estadoOrden);
+            ordenRepository.save(orden);
+        }
     }
 }

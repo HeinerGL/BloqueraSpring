@@ -12,7 +12,7 @@ import jakarta.persistence.InheritanceType;
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @SQLDelete(sql = "UPDATE producto SET active = false WHERE id = ?")
-public abstract class Articulo {
+public class Articulo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,8 +24,6 @@ public abstract class Articulo {
     private Double stock;
 
     private Double stockMinimo;
-
-    // private Medida medida;
 
     private Boolean active = true;
 

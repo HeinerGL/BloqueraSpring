@@ -21,6 +21,8 @@ import com.project.bloquera.dtos.materiaprima.MateriaPrimaCreateRequest;
 import com.project.bloquera.models.MateriaPrima;
 import com.project.bloquera.services.MateriaPrimaService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/materia-prima")
 public class MateriaPrimaController {
@@ -44,7 +46,7 @@ public class MateriaPrimaController {
     }
 
     @PostMapping
-    public ResponseEntity<MateriaPrima> create(@RequestBody MateriaPrimaCreateRequest materiaPrima) {
+    public ResponseEntity<MateriaPrima> create(@Valid @RequestBody MateriaPrimaCreateRequest materiaPrima) {
         var newMateriaPrima = materiaPrimaService.createMateriaPrima(materiaPrima);
         URI locationOfNewMateriaPrima = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
@@ -56,7 +58,7 @@ public class MateriaPrimaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MateriaPrima> update(@PathVariable Long id, @RequestBody MateriaPrima producto) {
+    public ResponseEntity<MateriaPrima> update(@PathVariable Long id, @RequestBody MateriaPrimaCreateRequest producto) {
         var updateMateriaPrima = materiaPrimaService.updateMateriaPrima(id, producto);
 
         return ResponseEntity.ok(updateMateriaPrima);

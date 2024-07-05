@@ -9,6 +9,7 @@ public record OrdenResponse(
     Long id,
     Instant fecha,
     Double total,
+    String estado,
     Cliente cliente,
     List<DetalleOrdenResponse> detalle
 ) {

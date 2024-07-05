@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.project.bloquera.dtos.unidad.UnidadMedidaCreateRequest;
 import com.project.bloquera.models.UnidadMedida;
 import com.project.bloquera.services.UnidadMedidaService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/unidad-medida")
@@ -35,6 +38,12 @@ public class UnidadMedidaController {
         return ResponseEntity.ok(unidadesMedida);
     }
 
+    @GetMapping("/list")
+    public ResponseEntity<Iterable<UnidadMedida>> list() {
+        var unidadesMedida = unidadMedidaService.getListUnidadMedidas();
+        return ResponseEntity.ok(unidadesMedida);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UnidadMedida> show(@PathVariable Long id) {
         var unidadMedida = unidadMedidaService.getUnidadMedidaById(id);
@@ -43,7 +52,7 @@ public class UnidadMedidaController {
     }
 
     @PostMapping
-    public ResponseEntity<UnidadMedida> create(@RequestBody UnidadMedida unidadMedida) {
+    public ResponseEntity<UnidadMedida> create(@Valid @RequestBody UnidadMedidaCreateRequest unidadMedida) {
         var newUnidadMedida = unidadMedidaService.createUnidadMedida(unidadMedida);
         URI locationOfNewUnidadMedida = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")

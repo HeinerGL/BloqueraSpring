@@ -3,6 +3,9 @@ package com.project.bloquera.controllers;
 import com.project.bloquera.dtos.cliente.ClienteCreateRequest;
 import com.project.bloquera.models.Cliente;
 import com.project.bloquera.services.ClienteService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -35,7 +38,7 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<Cliente> create(@RequestBody ClienteCreateRequest cliente) {
+    public ResponseEntity<Cliente> create(@Valid @RequestBody ClienteCreateRequest cliente) {
         var newCliente = clienteService.createCliente(cliente);
         URI locationOfNewCliente = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")

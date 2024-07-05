@@ -3,14 +3,19 @@ package com.project.bloquera.controllers;
 import com.project.bloquera.dtos.orden.OrdenCreateRequest;
 import com.project.bloquera.dtos.orden.OrdenResponse;
 import com.project.bloquera.services.OrdenService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/orden")
@@ -22,8 +27,8 @@ public class OrdenController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<OrdenResponse>> all(Principal principal) {
-        var ordenes = ordenService.getAllOrdenes();
+    public ResponseEntity<Page<OrdenResponse>> all(Pageable page) {
+        var ordenes = ordenService.getAllOrdenes(page);
         return ResponseEntity.ok(ordenes);
     }
 
@@ -35,8 +40,8 @@ public class OrdenController {
     }
 
     @PostMapping
-    public ResponseEntity<OrdenResponse> create(@RequestBody OrdenCreateRequest orden) {
-        var newOrden = ordenService.createOrden(orden);
+    public ResponseEntity<OrdenResponse> create(@Valid @RequestBody OrdenCreateRequest orden, @AuthenticationPrincipal Jwt jwt) {
+        var newOrden = ordenService.createOrden(orden, jwt.getSubject());
         URI locationOfNewOrden = ServletUriComponentsBuilder.fromCurrentRequest()
             .path("/{id}")
             .buildAndExpand(newOrden.id())

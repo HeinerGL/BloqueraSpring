@@ -22,6 +22,7 @@ public class OrdenMapper {
                 orden.getId(),
                 orden.getFecha(),
                 orden.getTotal(),
+                orden.getEstadoOrden().getNombre(),
                 orden.getCliente(),
                 detalle
         );
